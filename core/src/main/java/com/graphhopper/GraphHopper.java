@@ -720,6 +720,8 @@ public class GraphHopper {
             elevationProvider = new SonnyProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi3")) {
             elevationProvider = new MultiSource3ElevationProvider(cacheDirStr);
+        } else if (!eleProviderStr.isEmpty() && !eleProviderStr.equalsIgnoreCase("noop")) {
+            throw new IllegalArgumentException("Did not find elevation provider: " + eleProviderStr);
         }
 
         if (elevationProvider instanceof TileBasedElevationProvider) {
