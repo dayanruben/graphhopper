@@ -126,7 +126,7 @@ public class GpxConversions {
             }
         }
         if (withTrack) {
-            gpxOutput.append("\n<trk><name>").append(trackName).append("</name>");
+            gpxOutput.append("\n<trk><name>").append(simpleXMLEscape(trackName)).append("</name>");
 
             gpxOutput.append("<trkseg>");
             for (GPXEntry entry : createGPXList(instructions)) {
