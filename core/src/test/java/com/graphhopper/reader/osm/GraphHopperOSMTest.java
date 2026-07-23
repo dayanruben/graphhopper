@@ -451,6 +451,8 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         tmpGH.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
+        // close, otherwise the mmapped geometry file keeps the folder undeletable on Windows
+        tmpGH.close();
 
         // different encoded values do not matter, since they are ignored when loading the graph anyway
         instance = new GraphHopper().init(

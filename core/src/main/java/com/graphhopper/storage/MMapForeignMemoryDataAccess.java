@@ -244,9 +244,14 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
         if (newCapacity < this.capacity) {
             try {
-                // no force() before remap (see ensureCapacity); the retained region stays file-backed
-                mapSegment(HEADER_OFFSET, newCapacity);
+                // no force() before remap (see ensureCapacity); the retained region stays file-backed.
+                // Windows refuses setLength while the file is mapped, so unmap before truncating.
+                if (arena != null) {
+                    arena.close();
+                    arena = null;
+                }
                 raFile.setLength(HEADER_OFFSET + newCapacity);
+                mapSegment(HEADER_OFFSET, newCapacity);
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to trim " + getFullName(), ex);
             }
