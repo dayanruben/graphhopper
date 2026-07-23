@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
-import static com.graphhopper.storage.DAType.RAM_INT_STORE;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -40,6 +39,7 @@ public class GHDirectory implements Directory {
     private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
     private final Map<String, DataAccess> map = Collections.synchronizedMap(new HashMap<>());
     private final int defaultSegmentSize;
+    private boolean readOnly;
 
     public GHDirectory(String _location, DAType defaultType) {
         this(_location, defaultType, AbstractDataAccess.SEGMENT_SIZE_DEFAULT);
@@ -138,37 +138,7 @@ public class GHDirectory implements Directory {
             // per file name
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
-        DataAccess da;
-        if (type.isMMap()) {
-            if (type.getMemRef() == DAType.MemRef.MMAP_OLD) {
-                // Legacy ByteBuffer-based mmap, kept as a fallback / for comparison.
-                da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
-            } else if (type.isAllowWrites()) {
-                da = new MMapForeignMemoryDataAccess(name, location, true, segmentSize);
-            } else {
-                // Fast read-only path with all-final fields. The file must already exist on disk;
-                // there is no "loadExisting returned false" state — the constructor fails fast.
-                // The RO mapping preloads in its constructor, so pass the configured preload here.
-                da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, getPreload(name) > 0);
-            }
-        } else if (type.isInMemory()) {
-            if (type.isInteg()) {
-                if (type.isSingleSegment())
-                    da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
-                else
-                    da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
-            } else if (type.isLongBacked()) {
-                da = new RAMLongDataAccess(name, location, type.isStoring(), segmentSize);
-            } else if (type.isSingleSegment()) {
-                da = new RAM1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
-            } else {
-                da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
-            }
-        } else {
-            // MemRef.NATIVE: off-heap foreign memory (single contiguous MemorySegment, long-indexed)
-            da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
-        }
-
+        DataAccess da = type.create(name, location, segmentSize, getPreload(name), readOnly);
         map.put(name, da);
         return da;
     }
@@ -201,8 +171,8 @@ public class GHDirectory implements Directory {
     }
 
     private void removeBackingFile(DataAccess da, String name) {
-        if (da.getType().isStoring())
-            removeDir(new File(location + name));
+        // removeDir is a no-op if the file was never written (purely in-memory)
+        removeDir(new File(location + name));
     }
 
     @Override
@@ -216,19 +186,18 @@ public class GHDirectory implements Directory {
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
         DAType type = getDefault(dataAccess, typeFallback);
-        if (preferInts && type.isInMemory())
-            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+        if (preferInts && type.isOnHeap())
+            return RAM_INT;
         return type;
     }
 
-    public boolean isStoring() {
-        return typeFallback.isStoring();
-    }
-
-    @Override
-    public Directory create() {
-        if (isStoring())
-            new File(location).mkdirs();
+    /**
+     * Marks this Directory as read-only, e.g. for a read-only filesystem: the backing files of all
+     * DataAccess objects created afterwards must not be modified. Memory mapped types map them
+     * read-only (enforced by the OS), all other types throw on flush.
+     */
+    public GHDirectory setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
         return this;
     }
 

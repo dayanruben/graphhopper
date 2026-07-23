@@ -205,8 +205,4 @@ public final class MMapForeignReadOnlyDataAccess extends AbstractDataAccess {
         return segs;
     }
 
-    @Override
-    public DAType getType() {
-        return DAType.MMAP_RO;
-    }
 }

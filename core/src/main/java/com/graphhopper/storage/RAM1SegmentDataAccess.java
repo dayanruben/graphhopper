@@ -37,11 +37,11 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
     private byte[] data = new byte[0];
-    private boolean store;
+    private final boolean readOnly;
 
-    public RAM1SegmentDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAM1SegmentDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -84,9 +84,6 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -121,8 +118,9 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
-            return;
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -214,15 +212,4 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
         return segs;
     }
 
-    @Override
-    public boolean isStoring() {
-        return store;
-    }
-
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_1SEG_STORE;
-        return DAType.RAM_1SEG;
-    }
 }

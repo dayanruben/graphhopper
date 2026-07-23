@@ -46,11 +46,11 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
     private MemorySegment[] segments = new MemorySegment[0];
-    private boolean store;
+    private final boolean readOnly;
 
-    public ForeignMemorySegmentedDataAccess(String name, String location, boolean store, int segmentSize) {
+    public ForeignMemorySegmentedDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.readOnly = readOnly;
     }
 
     private static MemorySegment allocateNativeSegment(int size) {
@@ -100,9 +100,6 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -139,8 +136,9 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
-            return;
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -310,16 +308,4 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         return segments.length;
     }
 
-    @Override
-    public boolean isStoring() {
-        return store;
-    }
-
-    @Override
-    public DAType getType() {
-        // off-heap native memory (segmented); there is no dedicated segmented-native constant
-        if (isStoring())
-            return DAType.NATIVE_STORE;
-        return DAType.NATIVE;
-    }
 }

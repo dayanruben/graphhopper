@@ -105,11 +105,11 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
-    private final boolean store;
+    private final boolean readOnly;
 
-    public ForeignMemoryDataAccess(String name, String location, boolean store, int segmentSize) {
+    public ForeignMemoryDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -164,9 +164,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -211,8 +208,9 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
-            return;
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -384,15 +382,4 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
         return (int) (capacity / segmentSizeInBytes);
     }
 
-    @Override
-    public boolean isStoring() {
-        return store;
-    }
-
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.NATIVE_STORE;
-        return DAType.NATIVE;
-    }
 }

@@ -30,11 +30,11 @@ import java.util.Arrays;
  */
 public class RAMLongDataAccess extends AbstractDataAccess {
     private long[] data = new long[0];
-    private boolean store;
+    private final boolean readOnly;
 
-    public RAMLongDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMLongDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -78,9 +78,6 @@ public class RAMLongDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -127,8 +124,9 @@ public class RAMLongDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
-            return;
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -285,15 +283,4 @@ public class RAMLongDataAccess extends AbstractDataAccess {
         return segs;
     }
 
-    @Override
-    public boolean isStoring() {
-        return store;
-    }
-
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_LONG_STORE;
-        return DAType.RAM_LONG;
-    }
 }
