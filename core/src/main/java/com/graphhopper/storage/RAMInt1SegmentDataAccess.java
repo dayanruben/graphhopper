@@ -30,7 +30,7 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     private int[] data = new int[0];
     private final boolean readOnly;
 
-    public RAMInt1SegmentDataAccess(String name, String location, boolean readOnly, int segmentSize) {
+    public RAMInt1SegmentDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
         this.readOnly = readOnly;
     }

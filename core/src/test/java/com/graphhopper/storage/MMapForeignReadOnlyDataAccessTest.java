@@ -52,7 +52,7 @@ public class MMapForeignReadOnlyDataAccessTest {
 
     /** Builds a small file with the resizable writer, flushes, and closes it. */
     private void writeFixture() {
-        DataAccess da = new MMapForeignMemoryDataAccess(name, directory, true, SEGMENT_SIZE);
+        DataAccess da = new MMapForeignMemoryDataAccess(name, directory, SEGMENT_SIZE, false);
         da.create(SEGMENT_SIZE * 4L);
         da.setInt(0, 1);
         da.setInt(4, 2);

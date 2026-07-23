@@ -107,7 +107,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private long capacity;
     private final boolean readOnly;
 
-    public ForeignMemoryDataAccess(String name, String location, boolean readOnly, int segmentSize) {
+    public ForeignMemoryDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
         this.readOnly = readOnly;
     }

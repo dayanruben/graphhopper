@@ -32,7 +32,7 @@ public class RAMLongDataAccess extends AbstractDataAccess {
     private long[] data = new long[0];
     private final boolean readOnly;
 
-    public RAMLongDataAccess(String name, String location, boolean readOnly, int segmentSize) {
+    public RAMLongDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
         this.readOnly = readOnly;
     }

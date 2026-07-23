@@ -67,11 +67,11 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
     private RandomAccessFile raFile;
-    private final boolean allowWrites;
+    private final boolean readOnly;
 
-    public MMapForeignMemoryDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+    public MMapForeignMemoryDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
-        this.allowWrites = allowWrites;
+        this.readOnly = readOnly;
     }
 
     /**
@@ -92,9 +92,9 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
         if (raFile != null)
             return;
         try {
-            if (allowWrites)
+            if (!readOnly)
                 ensureParentDirectoryExists();
-            raFile = new RandomAccessFile(getFullName(), allowWrites ? "rw" : "r");
+            raFile = new RandomAccessFile(getFullName(), readOnly ? "r" : "rw");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -106,7 +106,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
                 arena.close();
 
             arena = Arena.ofShared();
-            FileChannel.MapMode mode = allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY;
+            FileChannel.MapMode mode = readOnly ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE;
             mappedSegment = raFile.getChannel().map(mode, offset, size, arena);
             segment = MemorySegment.ofAddress(mappedSegment.address()).reinterpret(size);
             capacity = size;

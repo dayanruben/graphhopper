@@ -39,37 +39,37 @@ public class DAType {
      * by the type. See RAMDataAccess.
      */
     public static final DAType RAM = register("RAM", true, false,
-            (name, location, segmentSize, preload, readOnly) -> new RAMDataAccess(name, location, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMDataAccess(name, location, segmentSize, readOnly));
     /**
      * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
      */
     public static final DAType RAM_INT = register("RAM_INT", true, false,
-            (name, location, segmentSize, preload, readOnly) -> new RAMIntDataAccess(name, location, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMIntDataAccess(name, location, segmentSize, readOnly));
     /**
      * Like RAM_INT, but backed by a single contiguous int[] for maximum read speed.
      * Not a good fit if the array needs to be resized frequently. Limited to Integer.MAX_VALUE ints
      * No support for short,byte and bytes.
      */
     public static final DAType RAM_INT_1SEG = register("RAM_INT_1SEG", true, false,
-            (name, location, segmentSize, preload, readOnly) -> new RAMInt1SegmentDataAccess(name, location, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMInt1SegmentDataAccess(name, location, segmentSize, readOnly));
     /**
      * Like RAM, but backed by a single contiguous byte[] (no segment math). Limited to ~2GB.
      * The on-heap equivalent of FOREIGN_ANON. See RAM1SegmentDataAccess.
      */
     public static final DAType RAM_1SEG = register("RAM_1SEG", true, false,
-            (name, location, segmentSize, preload, readOnly) -> new RAM1SegmentDataAccess(name, location, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAM1SegmentDataAccess(name, location, segmentSize, readOnly));
     /**
      * Like RAM_1SEG (single contiguous heap array, full byte access), but backed by a {@code long[]}
      * instead of a {@code byte[]} to allow up to ~16GB. See RAMLongDataAccess.
      */
     public static final DAType RAM_LONG = register("RAM_LONG", true, false,
-            (name, location, segmentSize, preload, readOnly) -> new RAMLongDataAccess(name, location, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMLongDataAccess(name, location, segmentSize, readOnly));
     /**
      * Off-heap DA object backed by anonymous (foreign) memory - the equivalent of RAM but outside
      * the JVM heap. See ForeignMemoryDataAccess.
      */
     public static final DAType FOREIGN_ANON = register("FOREIGN_ANON", false, false,
-            (name, location, segmentSize, preload, readOnly) -> new ForeignMemoryDataAccess(name, location, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new ForeignMemoryDataAccess(name, location, segmentSize, readOnly));
     /**
      * Memory mapped DA object backed by the Foreign Memory API. Always writes a file when created. The
      * caller cannot keep it in-memory. See MMapForeignMemoryDataAccess.
@@ -80,7 +80,7 @@ public class DAType {
     public static final DAType FOREIGN_MMAP = register("FOREIGN_MMAP", false, true,
             (name, location, segmentSize, preload, readOnly) -> readOnly
                     ? MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, preload > 0)
-                    : new MMapForeignMemoryDataAccess(name, location, true, segmentSize));
+                    : new MMapForeignMemoryDataAccess(name, location, segmentSize, false));
     /**
      * Legacy memory mapped DA object backed by ByteBuffers instead of the Foreign Memory API.
      * Always writes a file when created, it cannot be kept in-memory. Kept usable as a fallback and
@@ -91,6 +91,7 @@ public class DAType {
 
     static {
         // legacy names, still accepted in configs
+        alias("MMAP_STORE", MMAP);
         alias("RAM_STORE", RAM);
         alias("RAM_INT_STORE", RAM_INT);
     }

@@ -39,10 +39,10 @@ public class DataAccessBenchmark {
         // --- Single-segment / contiguous implementations ---
 //        benchmarkImpl("RAM1SegmentDataAccess (byte[])", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
 //        benchmarkImpl("RAMLongDataAccess (long[])", new RAMLongDataAccess("bench_long", "", false, segmentSize));
-        benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, segmentSize));
+        benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", segmentSize, false));
 
         // --- Segmented implementations: small segments ---
-        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
+        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", segmentSize, false));
 //        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
 //        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
 
@@ -54,7 +54,7 @@ public class DataAccessBenchmark {
                 ? Files.createTempDirectory(shm, "gh_bench_")
                 : Files.createTempDirectory("gh_bench_");
         String tmpLoc = tmpDir.toString() + "/";
-        MMapForeignMemoryDataAccess mfmDA = new MMapForeignMemoryDataAccess("bench_mmap", tmpLoc, true, segmentSize);
+        MMapForeignMemoryDataAccess mfmDA = new MMapForeignMemoryDataAccess("bench_mmap", tmpLoc, segmentSize, false);
         benchmarkImpl("MMapForeignMemoryDataAccess", mfmDA);
     }
 

@@ -35,7 +35,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     private final boolean readOnly;
     private int segmentSizeIntsPower;
 
-    public RAMIntDataAccess(String name, String location, boolean readOnly, int segmentSize) {
+    public RAMIntDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
         this.readOnly = readOnly;
     }

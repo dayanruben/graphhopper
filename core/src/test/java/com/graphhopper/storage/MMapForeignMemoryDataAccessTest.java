@@ -20,6 +20,6 @@ package com.graphhopper.storage;
 public class MMapForeignMemoryDataAccessTest extends DataAccessTest {
     @Override
     public DataAccess createDataAccess(String name, int segmentSize) {
-        return new MMapForeignMemoryDataAccess(name, directory, true, segmentSize);
+        return new MMapForeignMemoryDataAccess(name, directory, segmentSize, false);
     }
 }
